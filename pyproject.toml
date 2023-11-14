@@ -1,12 +1,16 @@
 [tool.poetry]
 name = "shame"
 version = "0.1.0"
-description = ""
+description = "Social-media web application where people can tell their bad experience of visiting diferent institutions"
 authors = ["chyvekshyno <tuky.chyvekshyno@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
+fastapi = "^0.104.1"
+uvicorn = "^0.24.0.post1"
+pydantic = "^2.5.0"
+sqlalchemy = "^2.0.23"
 
 
 [build-system]
