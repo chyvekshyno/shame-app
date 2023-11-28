@@ -36,7 +36,13 @@ def session() -> Generator[Session, None, None]:
     session = SessionTesting()
     Base.metadata.create_all(bind=engine)
 
-    new_user = User(id=0, username="tuki", password="1111", rating=3)
+    new_user = User(
+        id=0,
+        email="tuky.chyvekshyno@gmail.com",
+        username="tuki",
+        password="1111",
+        rating=3,
+    )
     lviv_address = Address(
         id=0, country="Ukraine", state="Lviv", city="Lviv", street="Hrinchenka, 14a"
     )
@@ -69,12 +75,20 @@ def session() -> Generator[Session, None, None]:
 
 
 def test_db_add_new_author(session: Session):
-    new_user = User(id=1, username="rostik", password="2222", rating=0)
+    new_user = User(
+        id=1,
+        email="roonysh@gmail.com",
+        username="rostik",
+        password="2222",
+        rating=0
+    )
     session.add(new_user)
     session.commit()
     user = session.scalars(select(User).where(User.username == "rostik")).first()
     assert user is not None
     assert user.username == new_user.username
+    assert user.password == new_user.password
+    assert user.email == new_user.email
 
 
 def test_db_add_shamestory(session: Session):

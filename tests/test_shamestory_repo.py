@@ -38,7 +38,13 @@ def session() -> Generator[Session, None, None]:
     session = SessionTesting()
     Base.metadata.create_all(bind=engine)
 
-    new_user = User(id=0, username="tuki", password="1111", rating=3)
+    new_user = User(
+        id=0,
+        email="tuky.chyvekshyno@gmail.com",
+        username="tuki",
+        password="1111",
+        rating=3,
+    )
     lviv_address = Address(
         id=0,
         country="Ukraine",
@@ -56,8 +62,8 @@ def session() -> Generator[Session, None, None]:
 
     first_instance: ShameStory = ShameStory(
         id=0,
-        author_id=0,
         text="Lorem ipsum dolor sit amet, qui minim labore adipisicing minim sint cillum sint consectetur cupidatat.",
+        author_id=0,
         location_id=0,
     )
 
@@ -94,6 +100,22 @@ def test_repo_insert_location(session: Session, shame_repo: ShameStoryRepository
     assert db_address.state == address.state
     assert db_address.city == address.city
     assert db_address.street == address.street
+
+
+def test_repo_insrt_user(session: Session, shame_repo: ShameStoryRepository):
+    user = schemas.CreateUser(
+        email="yyyyyana.ssssshamrai@gmail.com",
+        username="Yana",
+        password="1234",
+    )
+
+    db_user = shame_repo.add_user(session, user)
+
+    assert db_user is not None
+    assert db_user.id == 1
+    assert db_user.username == user.username
+    assert db_user.password == user.password
+    assert db_user.email == user.email
 
 
 def test_repo_insert_shamestory(session: Session, shame_repo: ShameStoryRepository):

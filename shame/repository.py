@@ -19,6 +19,13 @@ class ShameStoryRepository:
         return new_db_shamestory
 
     #
+    def add_user(self, session: Session, user: schemas.CreateUser) -> models.User:
+        db_user = models.User(**user.model_dump())
+        session.add(db_user)
+        session.commit()
+        return db_user
+
+    #
     def add_location(
         self,
         session: Session,

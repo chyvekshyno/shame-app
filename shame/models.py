@@ -10,6 +10,7 @@ class User(Base):
     __tablename__ = "Users"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    email: Mapped[str]
     username: Mapped[str]
     password: Mapped[str]
     stories: Mapped[List["ShameStory"]] = relationship(back_populates="author")
