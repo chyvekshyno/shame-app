@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from pydantic.config import ConfigDict
 
 
 class UserBase(BaseModel):
@@ -11,6 +12,7 @@ class CreateUser(UserBase):
 
 
 class User(UserBase):
+    model_config = ConfigDict(from_attributes=True)
     id: int
 
 
@@ -22,11 +24,8 @@ class ShameStoryBase(BaseModel):
 
 
 class ShameStory(ShameStoryBase):
+    model_config = ConfigDict(from_attributes=True)
     id: int
-
-
-class UpdateShameStory(ShameStoryBase):
-    pass
 
 
 class CreateShameStory(ShameStoryBase):
@@ -41,6 +40,7 @@ class AddressBase(BaseModel):
 
 
 class Address(AddressBase):
+    model_config = ConfigDict(from_attributes=True)
     id: int
 
 
