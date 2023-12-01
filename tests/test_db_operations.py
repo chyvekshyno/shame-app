@@ -6,29 +6,21 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 from sqlalchemy.sql import delete, select, update
 
-from shame.database import Base, get_database
-from shame.main import app
+from shame.database import Base
 from shame.models import Address, ShameStory, User
+
 
 DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(
     DATABASE_URL,
-    # echo=True,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-SessionTesting = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-
-
-def get_db_testing():
-    db = SessionTesting()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-app.dependency_overrides[get_database] = get_db_testing
+SessionTesting = sessionmaker(
+    bind=engine,
+    autocommit=False,
+    autoflush=False,
+)
 
 
 @pytest.fixture()
@@ -76,11 +68,7 @@ def session() -> Generator[Session, None, None]:
 
 def test_db_add_new_author(session: Session):
     new_user = User(
-        id=1,
-        email="roonysh@gmail.com",
-        username="rostik",
-        password="2222",
-        rating=0
+        id=1, email="roonysh@gmail.com", username="rostik", password="2222", rating=0
     )
     session.add(new_user)
     session.commit()
