@@ -7,7 +7,8 @@ from sqlalchemy.pool import StaticPool
 from sqlalchemy.sql import delete, select, update
 
 from shame.database import Base
-from shame.models import Address, ShameStory, User
+from shame.models import Address, ShameStory
+from shame.auth.models import User
 
 
 DATABASE_URL = "sqlite:///:memory:"
@@ -32,7 +33,7 @@ def session() -> Generator[Session, None, None]:
         id=0,
         email="tuky.chyvekshyno@gmail.com",
         username="tuki",
-        password="1111",
+        password_hashed="1111",
         rating=3,
     )
     lviv_address = Address(
@@ -49,8 +50,9 @@ def session() -> Generator[Session, None, None]:
     first_instance: ShameStory = ShameStory(
         id=0,
         author_id=0,
+        title="Lorem Ipsum",
         text="Lorem ipsum dolor sit amet, qui minim labore adipisicing minim sint cillum sint consectetur cupidatat.",
-        location_id=0,
+        address_id=0,
         # attachments=["path/to/some/interesting/photo"],
     )
 
@@ -68,14 +70,18 @@ def session() -> Generator[Session, None, None]:
 
 def test_db_add_new_author(session: Session):
     new_user = User(
-        id=1, email="roonysh@gmail.com", username="rostik", password="2222", rating=0
+        id=1,
+        email="roonysh@gmail.com",
+        username="rostik",
+        password_hashed="2222",
+        rating=0,
     )
     session.add(new_user)
     session.commit()
     user = session.scalars(select(User).where(User.username == "rostik")).first()
     assert user is not None
     assert user.username == new_user.username
-    assert user.password == new_user.password
+    assert user.password_hashed == new_user.password_hashed
     assert user.email == new_user.email
 
 
@@ -87,8 +93,9 @@ def test_db_add_shamestory(session: Session):
     adding_shamestory = ShameStory(
         id=3,
         author_id=0,
+        title="Lorem Ipsum",
         text="Lorem ipsum dolor sit amet, qui.",
-        location_id=kyiv_address.id,
+        address_id=kyiv_address.id,
     )
 
     session.add(kyiv_address)
@@ -97,8 +104,9 @@ def test_db_add_shamestory(session: Session):
 
     result: ShameStory = session.get_one(ShameStory, 3)
 
+    assert result.title == "Lorem Ipsum"
     assert result.text == "Lorem ipsum dolor sit amet, qui."
-    assert result.location == kyiv_address
+    assert result.address == kyiv_address
     assert result.author.username == "tuki"
 
 
@@ -114,17 +122,17 @@ def test_db_get_shamestory_by_id(session: Session):
     assert shamestory_db.author_id == 0
 
 
-def test_db_get_shamestories_by_location(session: Session):
-    location = session.scalar(
+def test_db_get_shamestories_by_address(session: Session):
+    address = session.scalar(
         select(Address).where(
             Address.city == "Lviv", Address.street == "Hrinchenka, 14a"
         )
     )
-    assert location is not None
+    assert address is not None
 
     shamestories_db = (
         session.execute(
-            select(ShameStory).where(ShameStory.location_id == location.id).limit(5)
+            select(ShameStory).where(ShameStory.address_id == address.id).limit(5)
         )
         .scalars()
         .all()
@@ -177,8 +185,9 @@ def test_db_update_shamestory(session: Session):
         .where(ShameStory.id == id)
         .values(
             author_id=32,
+            title="Lorem Ipsum New Title",
             text="Lorem ipsum dolor sit amet, qui.",
-            location_id=3,
+            address_id=3,
         )
     )
     session.commit()
@@ -186,9 +195,10 @@ def test_db_update_shamestory(session: Session):
     result: ShameStory = session.get_one(ShameStory, id)
     assert result is not None
     assert result.author_id == 32
+    assert result.title=="Lorem Ipsum New Title"
     assert result.text == "Lorem ipsum dolor sit amet, qui."
 
-    loc: Address = result.location
+    loc: Address = result.address
     assert loc is not None
     assert loc.city == "Ternopil"
     assert loc.street == "Ostrozkiy, 53"

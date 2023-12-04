@@ -1,13 +1,16 @@
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from shame import models, schemas, repository as repo
+from shame import models, schemas
+from shame import repository as shame_repo
+from shame.auth import repository as user_repo
+from shame.auth import schemas as user_schemas
 from shame.database import Base, get_database
-from shame.main import app
+from shame.app import app
 
 
 SQLITE_DB_URL = "sqlite:///:memory:"
@@ -40,25 +43,28 @@ def startup():
     db = SessionTesting()
 
     # Add initial data
-    repo.add_user(
+    user_repo.add(
         db,
-        schemas.CreateUser(
-            email="tuky.chyvekshyno@gmail.com", username="tuki", password="1111"
+        user_schemas.CreateUser(
+            email="tuky.chyvekshyno@gmail.com",
+            username="tuki",
+            password="1111",
         ),
     )
-    repo.add_location(
+    shame_repo.add_address(
         db,
         schemas.CreateAddress(
             country="Ukraine", state="Lviv", city="Lviv", street="Hrinchenka, 14a"
         ),
     )
-    repo.add(
-        db,
-        schemas.CreateShameStory(
+    shame_repo.add(
+        db=db,
+        shamestory=schemas.CreateShameStory(
+            title="Lorem Ipsum",
             text="Lorem ipsum dolor sit amet, qui minim labore adipisicing.",
-            author_id=0,
-            location_id=0,
         ),
+        author_id=0,
+        address_id=0,
     )
     db.close()
 
@@ -72,21 +78,41 @@ def test_api_runs():
     assert responce.json() == {"msg": "Hello Shame Application!"}
 
 
-def test_post_shamestory():
+def test_api_post_shamestory():
+    # authorize user
+    client.post(
+        "/signup",
+        json={
+            "username": "tuki",
+            "email": "tuki@gmail.com",
+            "full_name": "Artur",
+            "password": "1111",
+        },
+    )
+
+    # post shamestory
     responce = client.post(
         "/shamestories/",
         json={
-            "text": "Lorem ipsum dolor sit amet, qui minim.",
-            "author_id": 0,
-            "location_id": 0,
+            "shamestory": {
+                "title": "Lorem Ipsum",
+                "text": "Lorem ipsum dolor sit amet, qui minim.",
+            },
+            "address": {
+                "country": "Ukraine",
+                "state": "Lviv",
+                "city": "Lviv",
+                "street": "Hrinchenka, 14a",
+            },
         },
     )
     assert responce.status_code == 200
     responce_result = responce.json()
+    assert responce_result["title"] == "Lorem Ipsum"
     assert responce_result["text"] == "Lorem ipsum dolor sit amet, qui minim."
 
 
-def test_get_shamestories():
+def test_api_get_shamestories():
     responce = client.get("/shamestories")
     assert responce.status_code == 200
 
@@ -96,7 +122,7 @@ def test_get_shamestories():
     assert item_1["author_id"] == 0
 
 
-def test_get_shamestory_by_id():
+def test_api_get_shamestory_by_id():
     shamestory_id = 1
     responce = client.get(f"/shamestories/{shamestory_id}")
     assert responce.status_code == 200
@@ -120,13 +146,13 @@ def test_get_shamestory_by_id():
 #     assert responce.status_code == 200
 
 
-def test_update_shamestory_text():
+def test_api_update_shamestory_text():
     shamestory_id = 1
     responce = client.put(
         url=f"/shamestories/{shamestory_id}",
         json={
             "author_id": 0,
-            "location_id": 0,
+            "address_id": 0,
             "text": "New Lorem ipsum text",
         },
     )
@@ -136,7 +162,7 @@ def test_update_shamestory_text():
     assert result["text"] == "New Lorem ipsum text"
 
 
-def test_delete_shamestory():
+def test_api_delete_shamestory():
     shamestory_id = 1
     responce = client.delete(f"/shamestories/{shamestory_id}")
     with pytest.raises(NoResultFound):

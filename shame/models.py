@@ -1,27 +1,14 @@
-from typing import List
+from typing import List, TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Integer
+from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
 
-
-class User(Base):
-    __tablename__ = "Users"
-
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    email: Mapped[str]
-    username: Mapped[str]
-    password: Mapped[str]
-    stories: Mapped[List["ShameStory"]] = relationship(back_populates="author")
-    rating: Mapped[int] = mapped_column(default=0)
-
-    def __repr__(self) -> str:
-        return (
-            f"User(id={self.id!r}"
-            f", username={self.username!r}"
-            f", rating={self.rating!r})"
-        )
+if TYPE_CHECKING:
+    from .auth.models import User
+else:
+    User = "User"
 
 
 class Address(Base):
@@ -32,7 +19,10 @@ class Address(Base):
     state: Mapped[str] = mapped_column()
     city: Mapped[str] = mapped_column()
     street: Mapped[str] = mapped_column()
-    shamestories: Mapped[List["ShameStory"]] = relationship(back_populates="location")
+    shamestories: Mapped[List["ShameStory"]] = relationship(
+        # secondary=address_shamestory_association_table,
+        back_populates="address",
+    )
 
     def __repr__(self) -> str:
         return (
@@ -40,7 +30,7 @@ class Address(Base):
             f", country={self.country!r}"
             f", state={self.state!r}"
             f", city={self.city!r}"
-            f", st.={self.street!r})"
+            f", street={self.street!r})"
         )
 
 
@@ -50,19 +40,25 @@ class ShameStory(Base):
     __tablename__ = "ShameStories"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String(50))
     text: Mapped[str]
     agree: Mapped[int] = mapped_column(default=0)
 
-    location_id: Mapped[int] = mapped_column(ForeignKey("Addresses.id"))
-    location: Mapped["Address"] = relationship(back_populates="shamestories")
+    address_id: Mapped[int] = mapped_column(ForeignKey("Addresses.id"))
+    address: Mapped["Address"] = relationship(
+        # secondary=address_shamestory_association_table,
+        back_populates="shamestories",
+    )
 
     author_id: Mapped[int] = mapped_column(ForeignKey("Users.id"))
-    author: Mapped["User"] = relationship(back_populates="stories")
+    author: Mapped[User] = relationship(
+        "User", back_populates="stories", foreign_keys=author_id
+    )
 
     def __repr__(self) -> str:
         return (
             f"ShameStory(id={self.id!r}"
             f", text={self.text!r}"
             f", author={self.author!r}"
-            f", location={self.location!r})"
+            f", address={self.address!r})"
         )

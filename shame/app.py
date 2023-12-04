@@ -2,9 +2,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from . import models
+from . import models, route as shame_route
+from .auth import route as auth_route
 from .database import engine
-from .route import router
 
 
 @asynccontextmanager
@@ -16,7 +16,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(router)
+app.include_router(router=shame_route.router)
+app.include_router(router=auth_route.router)
 
 
 @app.get("/")

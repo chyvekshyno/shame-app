@@ -2,30 +2,18 @@ from pydantic import BaseModel
 from pydantic.config import ConfigDict
 
 
-class UserBase(BaseModel):
-    username: str
-    email: str
-
-
-class CreateUser(UserBase):
-    password: str
-
-
-class User(UserBase):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-
-
 class ShameStoryBase(BaseModel):
+    title: str
     text: str
-    agree: int = 0
-    author_id: int
-    location_id: int | None = None
 
 
 class ShameStory(ShameStoryBase):
     model_config = ConfigDict(from_attributes=True)
+
     id: int
+    agree: int = 0
+    author_id: int
+    address_id: int | None = None
 
 
 class CreateShameStory(ShameStoryBase):
